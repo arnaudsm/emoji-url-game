@@ -1,0 +1,167 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-size: 5em;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        // Ressources : https://matthewrayfield.com/articles/animating-urls-with-javascript-and-emojis/#%F0%9F%8C%96
+        
+        var width = 50;
+        var space = "_";
+        var laser = "-";
+        var enemy = "👾";
+        var spaceship = "🛸";
+        var animation_layer;
+        var items;
+        var moons = ['🌑', '🌘', '🌗', '🌖', '🌕', '🌔', '🌓', '🌒']
+
+        function Item(emoji, death, vector, position, deadly = false) {
+            this.emoji = emoji;
+            this.death = death;
+            this.vector = vector;
+            this.position = position + vector;
+            this.deadly = deadly;
+        }
+
+        var animations = {
+            "💥": "💢",
+        };
+
+        function display(debug = false) {
+            var display = animation_layer;
+
+            for (var position = 0; position < width; position++) {
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].position == position) {
+                        display[position] = items[i].emoji;
+                    }
+                }
+            }
+
+            if (debug) {
+                document.querySelector(".emoji").innerHTML = display.join("");
+            }
+
+            location.hash = display.join("");
+
+        }
+
+        function animation_cycle() {
+            for (var i = 0; i < animation_layer.length; i++) {
+                if (animation_layer[i] in animations) {
+                    animation_layer[i] = animations[animation_layer[i]];
+                } else {
+                    animation_layer[i] = space;
+                }
+            }
+        }
+
+        function item_cycle() {
+            for (var i = items.length - 1; i >= 0; i--) {
+                var position = items[i].position;
+                items[i].position += items[i].vector;
+                if (is_destroyed(items[i]) || items[i].position >= width || items[i].position < 0) {
+                    if (items[i] && items[i].death) {
+                        animation_layer[items[i].position] = items[i].death;
+                    }
+                    items.splice(i, 1);
+                }
+            }
+        }
+
+        function is_destroyed(item) {
+            if (item.deadly)
+                return false;
+
+            var position = item.position;
+            for (var i = items.length - 1; i >= 0; i--) {
+                if ((items[i].position - items[i].vector == position || items[i].position + items[i].vector == position || items[i].position == position) && items[i].deadly) {
+                    if (items[i].death) {
+                        animation_layer[items[i].position] = items[i].death;
+                    }
+                    items.splice(i, 1);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        document.onkeydown = checkKey;
+
+        function checkKey(e) {
+            e = e || window.event;
+
+            if (e.keyCode == '37') { // left arrow
+                items.push(new Item(laser, null, -1, 0, true));
+            } else if (e.keyCode == '39') { // right arrow
+                items.push(new Item(laser, null, 1, 0, true));
+            }
+
+            if (!is_alive()) {
+                init();
+            }
+        }
+
+
+
+        function init() {
+            animation_layer = new Array(width).fill(space);
+            items = [];
+            items.push(new Item(spaceship, "💥", 0, 0, true));
+        }
+
+        function is_alive() {
+            for (item of items) {
+                if (item.emoji == spaceship) return true;
+            }
+            return false;
+        }
+
+        function game() {
+            if (!is_alive()) {
+                game_over();
+                return;
+            }
+            display();
+            animation_cycle();
+            item_cycle();
+
+            if (Math.random() < 0.04)
+                items.push(new Item(enemy, "💥", -1, width));
+
+
+        }
+
+        function reverseString(str) {
+            return str.split("").reverse().join("");
+        }
+
+        function game_over() {
+            var i, n, wave = '';
+
+            for (i = 0; i < 10; i++) {
+                n = Math.floor(Math.sin((Date.now() / 200) + (i / 2)) * 4) + 4;
+                wave += String.fromCharCode(0x2581 + n);
+            }
+            //var moon = moons[Math.floor((Date.now() / 100) % moons.length)];
+            var string = wave + "[Game_Over]" + reverseString(wave);
+            items = [];
+            animation_layer = string.split("");
+            display();
+        }
+
+        init();
+        window.setInterval(game, 50);
+    </script>
+    <div class="emoji"></div>
+</body>
+
+</html>
