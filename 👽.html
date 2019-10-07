@@ -46,12 +46,15 @@
                     }
                 }
             }
-
+            var display_str = display.join("");
             if (debug) {
-                document.querySelector(".emoji").innerHTML = display.join("");
+                document.querySelector(".emoji").innerHTML = display_str;
             }
 
-            location.hash = display.join("");
+            location.hash = display_str;
+
+            debugstr();
+            console.log(display_str);
 
         }
 
@@ -71,27 +74,45 @@
                 items[i].position += items[i].vector;
             }
 
-            for (var i = items.length - 1; i >= 0; i--) {
+            for (var i = 0; i < items.length; i++) {
                 if (is_destroyed(items[i]) || items[i].position >= width || items[i].position < 0) {
                     if (items[i] && items[i].death) {
                         animation_layer[items[i].position] = items[i].death;
                     }
-                    items.splice(i, 1);
+                    delete_item(items[i]);
+                    if (i > 0)
+                        i--;
                 }
             }
         }
 
+        function delete_item(item) {
+            if(!item) return;
+            items = items.filter(function(value) {
+                return value.position != item.position || value.emoji != item.emoji;
+            });
+        }
+
+        function debugstr() {
+            var str = "\nStrings : ";
+            for (var i = items.length - 1; i >= 0; i--) {
+                str += items[i].emoji;
+            }
+            console.log(str);
+        }
+
         function is_destroyed(item) {
-            if (item.deadly)
+            if (item.emoji != enemy)
                 return false;
 
             var position = item.position;
             for (var i = items.length - 1; i >= 0; i--) {
-                if ((Math.abs(items[i].position - position) < 1) && items[i].deadly) {
+                if ((Math.abs(items[i].position - position) < 3) && items[i].deadly && items[i].emoji != item.emoji) {
                     if (items[i].death) {
                         animation_layer[items[i].position] = items[i].death;
                     }
-                    items.splice(i, 1);
+                    console.log("items deleted");
+                    delete_item(items[i]);
                     return true;
                 }
             }
@@ -163,7 +184,7 @@
         }
 
         init();
-        window.setInterval(game, 30);
+        window.setInterval(game, 50);
     </script>
     <div class="emoji"></div>
 </body>
