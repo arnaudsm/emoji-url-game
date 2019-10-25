@@ -183,6 +183,10 @@
         }
 
         function init() {
+            if (window.matchMedia( "(max-width: 800px)" ).matches) {
+              width = 30
+            }
+
             animation_layer = new Array(width).fill(space);
             items = [];
             spawn("🛸", "💥", 0, 0, false);
@@ -315,7 +319,7 @@
         function game_over() {
             var i, n, wave = '';
 
-            for (i = 0; i < 10; i++) {
+            for (i = 0; i < (width/5); i++) {
                 n = Math.floor(Math.sin((Date.now() / 200) + (i / 2)) * 4) + 4;
                 wave += String.fromCharCode(0x2581 + n);
             }
