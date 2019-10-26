@@ -31,7 +31,7 @@
         
         .instructions,
         .instructions_mobile {
-            font-size: 2em;
+            font-size: 1.6em;
         }
         
         .instructions_mobile {
@@ -60,6 +60,7 @@
         @media only screen and (max-width: 800px) {
             .instructions_mobile {
                 display: block;
+                font-size: 1.3em;
             }
             .instructions {
                 display: none;
@@ -98,8 +99,9 @@
             Chicken Invaders<br>
             <b>Emoji Edition 🐔</b>
         </h1>
-        <div class="instructions">Press ➡️ to shoot lasers !</div>
-        <div class="instructions_mobile">👆 Tap to shoot lasers !</div>
+        <div class="instructions">Press ➡️ to shoot lasers at 🐓🥚 but spare the 🛸</div>
+
+        <div class="instructions_mobile">👆 Tap to shoot lasers at 🐓🥚 but spare the 🛸</div>
         Inspired by this cool <a href="https://matthewrayfield.com/articles/animating-urls-with-javascript-and-emojis/">blog post</a> by Matthew Rayfield.
         <br>
         <br>
@@ -151,13 +153,14 @@
 
     <script>
         var width = 50;
-        var speed = 50;
+        var speed = 60;
         var space = "_";
         var animation_layer;
         var items;
         var bonus = false;
         var score = 0;
         var highscore = 0;
+        var moons = ['🌑', '🌘', '🌗', '🌖', '🌕', '🌔', '🌓', '🌒'];
 
         // 🐥🥚🐤🐓🐦🍗🐣🐔
 
@@ -166,6 +169,8 @@
                 spawn("🐓", "🐦", -1, width, true);
             } else if (Math.random() < 0.01) {
                 spawn("🥚", "🐣", -1, width, true);
+            } else if (Math.random() < 0.01) {
+                spawn("🛸", null,-1, width , true);
             }
         }
 
@@ -186,7 +191,7 @@
         function init() {
             if (window.matchMedia( "(max-width: 800px)" ).matches) {
               width = 20;
-              speed = 70;
+              speed = 80;
             }
 
             animation_layer = new Array(width).fill(space);
@@ -195,10 +200,7 @@
         }
 
         function is_alive() {
-            for (item of items) {
-                if (item.emoji == "🛸") return true;
-            }
-            return false;
+            return items.length > 0 && items[0].emoji == "🛸" && items[0].alive;
         }
 
         function game() {
@@ -230,6 +232,8 @@
             }
 
             location.hash = display.join("");
+
+            document.title = moons[Math.floor((Date.now() / 100) % moons.length)];
         }
 
         function display_score() {
@@ -248,7 +252,7 @@
                 } else if (animation_layer[i] == "🐦") {
 
                     if (Math.random() < 0.2 && bonus) {
-                        spawn("🍗", "🍗", -1, i, false, true);
+                        spawn("🍗", null, -1, i, false, true);
                     } else {
                         animation_layer[i] = "💥";
                     }
@@ -265,11 +269,15 @@
                 var position = items[i].position;
                 items[i].position += items[i].vector;
 
-                if (collisions(items[i]) || items[i].position >= width || items[i].position < 0) {
+                if (collisions(items[i])) {
                     if (items[i] && items[i].death) {
                         animation_layer[items[i].position] = items[i].death;
                     }
                     kill(items[i]);
+                } else if (items[i].position >= width || items[i].position < 0) {
+                    if (items[i].emoji != "🛸") {
+                        kill(items[i]);
+                    }
                 }
             }
 
@@ -277,7 +285,12 @@
         }
 
         function kill(item) {
+            if (item === undefined) return;
             item.alive = false;
+            
+            if (item.emoji == "🛸" && item.deadly) {
+                items = items.filter(item => item.emoji != "🛸");
+            }
         }
 
         function collisions(item) {
@@ -286,12 +299,13 @@
 
             var position = item.position;
             for (var i = 0; i < items.length; i++) {
-                if (Math.abs(items[i].position - position) < 2 && items[i].deadly) {
+                if (Math.abs(items[i].position - position) < 2 && items[i].deadly && items[i].emoji != item.emoji) {
                     if (items[i].death) {
                         animation_layer[items[i].position] = items[i].death;
                     }
                     score++;
                     display_score();
+
                     kill(items[i]);
                     return true;
                 }
